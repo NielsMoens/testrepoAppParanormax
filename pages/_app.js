@@ -15,6 +15,7 @@ function MyApp({ Component, pageProps }) {
                     {
                         !!Component.requiresAuth ? (
                             <AuthGuard>
+
                                 <Component {...pageProps} />
                             </AuthGuard>
                         ) : <Component {...pageProps} />

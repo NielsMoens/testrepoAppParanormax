@@ -1,15 +1,35 @@
-import {useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client";
 import GET_ASSIGNMENTS from "../../../../lib/Queries/getAssigments";
 import {getUser} from "../../../core/storage";
+import MUTATE_QUEUE_ASSIGN_USER from "../../../../lib/mutations/queueUserAssignment";
+import {useRouter} from "next/router";
+
+// voor dat je user approved => popup met alle queued users per assignment
 
 const Assignments = () => {
+    const router = useRouter();
     const AssQuery = useQuery(GET_ASSIGNMENTS);
+    const [queueUserAssignment] = useMutation(MUTATE_QUEUE_ASSIGN_USER);
     const { data, loading, error } = AssQuery;
 
     const userD = getUser();
-    console.log(userD.user.firstName);
+
+    const assignUser = async (assignmentId) => {
+        await queueUserAssignment({
+            variables: {
+                assignment: [parseInt(assignmentId)],
+                assignee: [parseInt(userD.user.id)],
+                authorId: parseInt(userD.user.id)
+            },
+        })
+    }
+
+    const showDetails = (assignmentId) => {
+        return router.push(`/app/assignment/${assignmentId}`);
+    }
 
     if (loading) return 'Loading...';
+    console.log(data)
     const { entries } = data;
     return (
         <>
@@ -39,12 +59,17 @@ const Assignments = () => {
                                     <div className="row">
                                         <div className="col-12 mb-4">
                                             <div className=" row d-flex align-items-center align-self-start">
-                                                <div className="col-12">
+                                                <div className="col-9">
                                                     <h3 className="mb-0">{entry.title}</h3>
                                                     <span
                                                         className={entry.assigmentStatus[0].title === 'failed' ? "text-danger ml-2 mb-0 font-weight-medium" : "text-success ml-2 mb-0 font-weight-medium"}>
                                                         {entry.assigmentStatus[0].title}
                                                     </span>
+                                                </div>
+                                                <div className="col-3">
+                                                    <button onClick={(e) => { e.preventDefault(); return showDetails(entry.id) }}>
+                                                        show details
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -59,6 +84,9 @@ const Assignments = () => {
                                         <div className="col-3 mt-3">
                                             <p className="text-muted font-weight-normal">{new Date(entry.postDate).toLocaleDateString()}</p>
                                         </div>
+                                        { entry.assigmentStatus[0].title === 'searching' ? <button onClick={(e) => { e.preventDefault(); return assignUser(entry.id) }}>
+                                            Assign
+                                        </button> : ''}
                                     </div>
                                 </div>
                             </div>

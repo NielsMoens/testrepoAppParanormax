@@ -10,3 +10,4 @@ const App = () => {
 
 App.requiresAuth = true;
 export default App;
+
